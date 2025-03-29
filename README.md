@@ -18,6 +18,6 @@ The configuration is passed as a JSON file with the following structure:
 The image can be run with the following command:
 
 ```sh
-docker run -d -v /path/to/config.json:/config.json \
+docker run -d -v /path/to/config.json:/config.json:ro \
     ghcr.io/dinvlad/invoiceninja-mercury-sync:main
 ```
