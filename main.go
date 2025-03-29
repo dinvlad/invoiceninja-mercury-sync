@@ -237,7 +237,7 @@ func getInvoiceNinjaRequest(config *Config, method string, url string, body any)
 		"X-API-Token":      config.InvoiceNinjaToken,
 		"X-Requested-With": "retryablehttp",
 	}
-	return getRequest(method, config.InvoiceNinjaURL+"api/v1"+url, headers, body)
+	return getRequest(method, config.InvoiceNinjaURL+"/api/v1"+url, headers, body)
 }
 
 func fetchBankIntegrationID(config *Config) error {
