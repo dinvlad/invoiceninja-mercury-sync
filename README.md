@@ -13,6 +13,8 @@ The configuration is passed as a JSON file with the following structure:
 }
 ```
 
+Mercury API key only needs **Read** access to your Mercury account.
+
 ## Running
 
 The image can be run with the following command:
