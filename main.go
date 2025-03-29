@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,12 +22,12 @@ import (
 type Config struct {
 	MercuryAPIKey     string `json:"mercuryAPIKey"`
 	InvoiceNinjaToken string `json:"invoiceNinjaToken"`
+	InvoiceNinjaURL   string `json:"invoiceNinjaURL"`
 	BankProvider      string `json:"invoiceNinjaBankProvider"`
 	SyncIntervalHours int    `json:"syncIntervalHours"`
 	LogLevel          string `json:"logLevel"`
 
 	stateFilePath     string
-	invoiceNinjaURL   string
 	bankIntegrationID string
 	mercuryAccounts   []*MercuryAccount
 }
@@ -66,7 +67,6 @@ func loadConfig(configPath, dataDir, invoiceNinjaURL string) (*Config, error) {
 		SyncIntervalHours: 1,
 		LogLevel:          "info",
 		BankProvider:      "Mercury",
-		invoiceNinjaURL:   invoiceNinjaURL,
 		stateFilePath:     filepath.Join(dataDir, "sync_state.json"),
 	}
 
@@ -84,6 +84,13 @@ func loadConfig(configPath, dataDir, invoiceNinjaURL string) (*Config, error) {
 	}
 	if config.InvoiceNinjaToken == "" {
 		return nil, fmt.Errorf("missing InvoiceNinja token")
+	}
+
+	if config.InvoiceNinjaURL == "" {
+		config.InvoiceNinjaURL = invoiceNinjaURL
+	}
+	if _, err := url.ParseRequestURI(config.InvoiceNinjaURL); err != nil {
+		return nil, fmt.Errorf("invalid InvoiceNinja URL: %v", err)
 	}
 
 	return config, nil
@@ -230,7 +237,7 @@ func getInvoiceNinjaRequest(config *Config, method string, url string, body any)
 		"X-API-Token":      config.InvoiceNinjaToken,
 		"X-Requested-With": "retryablehttp",
 	}
-	return getRequest(method, config.invoiceNinjaURL+"/api/v1"+url, headers, body)
+	return getRequest(method, config.InvoiceNinjaURL+"api/v1"+url, headers, body)
 }
 
 func fetchBankIntegrationID(config *Config) error {
@@ -356,9 +363,9 @@ func setupHttpClient() {
 }
 
 func main() {
-	configPath := flag.String("c", "/config", "Path to config file")
+	configPath := flag.String("c", "/config.json", "Path to config file")
 	dataDir := flag.String("d", "/data", "Directory for storing state")
-	invoiceNinjaURL := flag.String("i", "http://localhost:9000", "InvoiceNinja URL")
+	invoiceNinjaURL := flag.String("i", "", "InvoiceNinja URL")
 	flag.Parse()
 
 	config, err := loadConfig(*configPath, *dataDir, *invoiceNinjaURL)
