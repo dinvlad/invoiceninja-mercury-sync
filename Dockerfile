@@ -12,6 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -o sy
 
 FROM cgr.dev/chainguard/static
 
+WORKDIR /data
 VOLUME /data
 
 COPY --from=builder /app/sync /
