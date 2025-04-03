@@ -235,7 +235,7 @@ func fetchMercuryTransactions(config *Config, state *SyncState, acct *MercuryAcc
 func getInvoiceNinjaRequest(config *Config, method string, url string, body any) (*rh.Request, error) {
 	headers := map[string]string{
 		"X-API-Token":      config.InvoiceNinjaToken,
-		"X-Requested-With": "retryablehttp",
+		"X-Requested-With": "XMLHttpRequest",
 	}
 	return getRequest(method, config.InvoiceNinjaURL+"/api/v1"+url, headers, body)
 }
