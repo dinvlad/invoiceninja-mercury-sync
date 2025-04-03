@@ -270,7 +270,7 @@ func createInvoiceNinjaTransaction(config *Config, tx *MercuryTransaction) error
 		baseType = "CREDIT"
 	}
 
-	req, err := getInvoiceNinjaRequest(config, "POST", "/bank_transactions", InvoiceNinjaBankTX{
+	req, err := getInvoiceNinjaRequest(config, "POST", "/bank_transactions", &InvoiceNinjaBankTX{
 		Amount:            math.Abs(tx.Amount),
 		Date:              tx.PostedAt.Format("2006-01-02"),
 		Description:       tx.BankDescription,
