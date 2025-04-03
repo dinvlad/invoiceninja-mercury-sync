@@ -212,7 +212,7 @@ func fetchMercuryAccounts(config *Config) error {
 }
 
 func fetchMercuryTransactions(config *Config, acct *MercuryAccount) ([]*MercuryTransaction, error) {
-	start := time.Now().AddDate(0, 0, -config.SyncStartDaysAgo).Format(time.RFC3339)
+	start := time.Now().AddDate(0, 0, -config.SyncStartDaysAgo).UTC().Format(time.RFC3339)
 	slog.Debug("Fetching Mercury transactions", "account", acct.Name, "since", start)
 
 	url := fmt.Sprintf("/account/%s/transactions?status=sent&start=%s", acct.ID, start)
