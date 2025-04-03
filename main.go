@@ -169,10 +169,11 @@ func submitRequest(req *rh.Request, res any) error {
 
 func getRequest(method string, url string, headers map[string]string, body any) (*rh.Request, error) {
 	if body != nil {
-		body, err := json.Marshal(body)
+		b, err := json.Marshal(body)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling body: %s %s: %s %v", method, url, string(body), err)
+			return nil, fmt.Errorf("error marshaling body: %s %s: %s %v", method, url, string(b), err)
 		}
+		body = b
 	}
 	req, err := rh.NewRequest(method, url, body)
 	if err != nil {
