@@ -25,6 +25,7 @@ type Config struct {
 	InvoiceNinjaURL   string `json:"invoiceNinjaURL"`
 	BankProvider      string `json:"invoiceNinjaBankProvider"`
 	SyncIntervalHours int    `json:"syncIntervalHours"`
+	SyncStartDaysAgo  int    `json:"syncStartDaysAgo"`
 	LogLevel          string `json:"logLevel"`
 
 	stateFilePath     string
@@ -33,8 +34,7 @@ type Config struct {
 }
 
 type SyncState struct {
-	LastSyncTimestamp time.Time            `json:"last_sync_timestamp"`
-	ProcessedTxIDs    map[string]time.Time `json:"processed_tx_ids"`
+	ProcessedTxIDs map[string]time.Time `json:"processed_tx_ids"`
 }
 
 type MercuryAccount struct {
@@ -65,6 +65,7 @@ type BankIntegration struct {
 func loadConfig(configPath, dataDir, invoiceNinjaURL string) (*Config, error) {
 	config := &Config{
 		SyncIntervalHours: 1,
+		SyncStartDaysAgo:  7, // Typical time for bank transactions is 3–5 days
 		LogLevel:          "info",
 		BankProvider:      "Mercury",
 		stateFilePath:     filepath.Join(dataDir, "sync_state.json"),
@@ -98,8 +99,7 @@ func loadConfig(configPath, dataDir, invoiceNinjaURL string) (*Config, error) {
 
 func loadState(stateFilePath string) (*SyncState, error) {
 	state := &SyncState{
-		LastSyncTimestamp: time.Now().AddDate(0, 0, -30),
-		ProcessedTxIDs:    make(map[string]time.Time),
+		ProcessedTxIDs: make(map[string]time.Time),
 	}
 
 	if _, err := os.Stat(stateFilePath); os.IsNotExist(err) {
@@ -116,14 +116,11 @@ func loadState(stateFilePath string) (*SyncState, error) {
 		return nil, fmt.Errorf("error parsing state file: %v", err)
 	}
 
-	slog.Debug("Loaded state", "last_sync", state.LastSyncTimestamp,
-		"processed_tx_count", len(state.ProcessedTxIDs))
+	slog.Debug("Loaded state", "processed_tx_count", len(state.ProcessedTxIDs))
 	return state, nil
 }
 
 func saveState(stateFilePath string, state *SyncState) error {
-	state.LastSyncTimestamp = time.Now()
-
 	data, err := json.Marshal(state)
 	if err != nil {
 		return fmt.Errorf("error serializing state: %v", err)
@@ -214,8 +211,8 @@ func fetchMercuryAccounts(config *Config) error {
 	return nil
 }
 
-func fetchMercuryTransactions(config *Config, state *SyncState, acct *MercuryAccount) ([]*MercuryTransaction, error) {
-	start := state.LastSyncTimestamp.Add(-5 * time.Minute).Format(time.RFC3339)
+func fetchMercuryTransactions(config *Config, acct *MercuryAccount) ([]*MercuryTransaction, error) {
+	start := time.Now().AddDate(0, 0, -config.SyncStartDaysAgo)
 	slog.Debug("Fetching Mercury transactions", "account", acct.Name, "since", start)
 
 	url := fmt.Sprintf("/account/%s/transactions?status=sent&start=%s", acct.ID, start)
@@ -302,7 +299,7 @@ func syncTransactions(config *Config, state *SyncState) error {
 	for _, acct := range config.mercuryAccounts {
 		slog.Debug("Processing account", "name", acct.Name)
 
-		txs, err := fetchMercuryTransactions(config, state, acct)
+		txs, err := fetchMercuryTransactions(config, acct)
 		if err != nil {
 			slog.Error("Error fetching transactions", "account", acct.Name, "error", err)
 			continue
