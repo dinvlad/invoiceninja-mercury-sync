@@ -288,7 +288,7 @@ func createInvoiceNinjaTransaction(config *Config, tx *MercuryTransaction) error
 }
 
 func syncTransactions(config *Config, state *SyncState) error {
-	cutoffTime := time.Now().AddDate(0, 0, -7)
+	cutoffTime := time.Now().AddDate(0, 0, -config.SyncStartDaysAgo)
 
 	for id, timestamp := range state.ProcessedTxIDs {
 		if timestamp.Before(cutoffTime) {
