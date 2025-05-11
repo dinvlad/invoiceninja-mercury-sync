@@ -168,14 +168,13 @@ func submitRequest(req *rh.Request, res any) error {
 }
 
 func getRequest(method string, url string, headers map[string]string, body any) (*rh.Request, error) {
-	bStr := ""
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling body: %s %s: %s %v", method, url, string(b), err)
 		}
 		body = b
-		bStr = string(b)
+		slog.Debug("API request", "method", method, "url", url, "body", string(b))
 	}
 	req, err := rh.NewRequest(method, url, body)
 	if err != nil {
@@ -187,7 +186,6 @@ func getRequest(method string, url string, headers map[string]string, body any) 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	slog.Debug("API request", "method", method, "url", url, "body", bStr)
 	return req, nil
 }
 
